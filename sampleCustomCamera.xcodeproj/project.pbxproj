@@ -15,6 +15,12 @@
 		041B74031C967B110009D043 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 041B74011C967B110009D043 /* LaunchScreen.storyboard */; };
 		041B740E1C967B110009D043 /* sampleCustomCameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041B740D1C967B110009D043 /* sampleCustomCameraTests.swift */; };
 		041B74191C967B110009D043 /* sampleCustomCameraUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041B74181C967B110009D043 /* sampleCustomCameraUITests.swift */; };
+		041B74281C967C0D0009D043 /* camera.png in Resources */ = {isa = PBXBuildFile; fileRef = 041B74271C967C0D0009D043 /* camera.png */; };
+		041B742A1C967CB10009D043 /* WMCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 041B74291C967CB10009D043 /* WMCamera.swift */; };
+		041B74311C967DEE0009D043 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 041B74301C967DEE0009D043 /* AVFoundation.framework */; };
+		041B74331C967DF90009D043 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 041B74321C967DF90009D043 /* AssetsLibrary.framework */; };
+		041B74361C96AFC00009D043 /* flash.png in Resources */ = {isa = PBXBuildFile; fileRef = 041B74341C96AFC00009D043 /* flash.png */; };
+		041B74371C96AFC00009D043 /* retry.png in Resources */ = {isa = PBXBuildFile; fileRef = 041B74351C96AFC00009D043 /* retry.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +55,12 @@
 		041B74141C967B110009D043 /* sampleCustomCameraUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = sampleCustomCameraUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		041B74181C967B110009D043 /* sampleCustomCameraUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = sampleCustomCameraUITests.swift; sourceTree = "<group>"; };
 		041B741A1C967B110009D043 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		041B74271C967C0D0009D043 /* camera.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = camera.png; sourceTree = "<group>"; };
+		041B74291C967CB10009D043 /* WMCamera.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WMCamera.swift; sourceTree = "<group>"; };
+		041B74301C967DEE0009D043 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		041B74321C967DF90009D043 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		041B74341C96AFC00009D043 /* flash.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = flash.png; sourceTree = "<group>"; };
+		041B74351C96AFC00009D043 /* retry.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = retry.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +68,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				041B74331C967DF90009D043 /* AssetsLibrary.framework in Frameworks */,
+				041B74311C967DEE0009D043 /* AVFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,6 +93,8 @@
 		041B73E91C967B110009D043 = {
 			isa = PBXGroup;
 			children = (
+				041B742F1C967DE00009D043 /* Library */,
+				041B74261C967C0D0009D043 /* icon */,
 				041B73F41C967B110009D043 /* sampleCustomCamera */,
 				041B740C1C967B110009D043 /* sampleCustomCameraTests */,
 				041B74171C967B110009D043 /* sampleCustomCameraUITests */,
@@ -101,6 +117,7 @@
 			children = (
 				041B73F51C967B110009D043 /* AppDelegate.swift */,
 				041B73F71C967B110009D043 /* ViewController.swift */,
+				041B74291C967CB10009D043 /* WMCamera.swift */,
 				041B73F91C967B110009D043 /* Main.storyboard */,
 				041B73FF1C967B110009D043 /* Assets.xcassets */,
 				041B74011C967B110009D043 /* LaunchScreen.storyboard */,
@@ -126,6 +143,25 @@
 				041B741A1C967B110009D043 /* Info.plist */,
 			);
 			path = sampleCustomCameraUITests;
+			sourceTree = "<group>";
+		};
+		041B74261C967C0D0009D043 /* icon */ = {
+			isa = PBXGroup;
+			children = (
+				041B74341C96AFC00009D043 /* flash.png */,
+				041B74351C96AFC00009D043 /* retry.png */,
+				041B74271C967C0D0009D043 /* camera.png */,
+			);
+			path = icon;
+			sourceTree = "<group>";
+		};
+		041B742F1C967DE00009D043 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				041B74321C967DF90009D043 /* AssetsLibrary.framework */,
+				041B74301C967DEE0009D043 /* AVFoundation.framework */,
+			);
+			path = Library;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -234,6 +270,9 @@
 			files = (
 				041B74031C967B110009D043 /* LaunchScreen.storyboard in Resources */,
 				041B74001C967B110009D043 /* Assets.xcassets in Resources */,
+				041B74281C967C0D0009D043 /* camera.png in Resources */,
+				041B74361C96AFC00009D043 /* flash.png in Resources */,
+				041B74371C96AFC00009D043 /* retry.png in Resources */,
 				041B73FB1C967B110009D043 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -261,6 +300,7 @@
 			files = (
 				041B73FE1C967B110009D043 /* sampleCustomCamera.xcdatamodeld in Sources */,
 				041B73F81C967B110009D043 /* ViewController.swift in Sources */,
+				041B742A1C967CB10009D043 /* WMCamera.swift in Sources */,
 				041B73F61C967B110009D043 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
