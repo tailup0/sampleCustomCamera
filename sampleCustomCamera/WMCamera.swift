@@ -12,59 +12,21 @@ import AssetsLibrary
 
 class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
 {
+    private var vidLayer : AVCaptureVideoPreviewLayer?
     private var imgOutput : AVCaptureStillImageOutput?
     private var vidOutput : AVCaptureMovieFileOutput?
     private var session : AVCaptureSession?
+    private var pv : UIProgressView?
+    private var tm : NSTimer?
     
     override func viewDidLoad()
     {
         super.viewDidLoad()
-        self.initView()
         self.initCamera(AVCaptureDevicePosition.Back)
+        self.initController()
     }
     
     // MARK: - UI
-    func initView()
-    {
-        self.view.backgroundColor = UIColor.whiteColor()
-        
-        // Button (Snap, Stop)
-        let hBtn = 100 as CGFloat
-        let btnSnap: UIButton = UIButton(type: .Custom)
-        btnSnap.frame = CGRectMake(0, 0, hBtn, hBtn)
-        btnSnap.backgroundColor = UIColor.blackColor()
-        btnSnap.center = CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 3 * 2 + self.view.frame.size.height / 6)
-        btnSnap.layer.cornerRadius = hBtn / 2
-        btnSnap.addTarget(self, action:"takePicture", forControlEvents: UIControlEvents.TouchUpInside)
-        self.view.addSubview(btnSnap)
-        
-        // Add long press
-        let longPress = UILongPressGestureRecognizer(target: self, action: "longPressed:")
-        btnSnap.addGestureRecognizer(longPress)
-        
-        // Button (Flash)
-        let btnFlash: UIButton = UIButton(type: .Custom)
-        btnFlash.setImage(UIImage(named: "flash"), forState: .Normal)
-        btnFlash.frame = CGRectMake(0, 0, 70, 70)
-        btnFlash.center = CGPointMake(self.view.frame.size.width / 4 - hBtn / 4, self.view.frame.size.height / 3 * 2 + self.view.frame.size.height / 6)
-        btnFlash.layer.cornerRadius = 35
-        btnFlash.layer.borderWidth = 3
-        btnFlash.layer.borderColor = UIColor.lightGrayColor().colorWithAlphaComponent(0.2).CGColor
-        btnFlash.addTarget(self, action:"flash", forControlEvents: UIControlEvents.TouchUpInside)
-        self.view.addSubview(btnFlash)
-        
-        // Button (Switch camera)
-        let btnSwitch: UIButton = UIButton(type: .Custom)
-        btnSwitch.setImage(UIImage(named: "retry"), forState: .Normal)
-        btnSwitch.frame = CGRectMake(0, 0, 70, 70)
-        btnSwitch.center = CGPointMake(self.view.frame.size.width / 4 * 3 + hBtn / 4, self.view.frame.size.height / 3 * 2 + self.view.frame.size.height / 6)
-        btnSwitch.layer.cornerRadius = 35
-        btnSwitch.layer.borderWidth = 3
-        btnSwitch.layer.borderColor = UIColor.lightGrayColor().colorWithAlphaComponent(0.2).CGColor
-        btnSwitch.addTarget(self, action:"switchCamera", forControlEvents: UIControlEvents.TouchUpInside)
-        self.view.addSubview(btnSwitch)
-    }
-    
     func initCamera(position: AVCaptureDevicePosition)
     {
         var myDevice: AVCaptureDevice?
@@ -112,15 +74,65 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         session?.addOutput(vidOutput)
         session?.commitConfiguration()
         
-        // Add video layer
-        let vidLayer = AVCaptureVideoPreviewLayer(session: session)
-        vidLayer.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height / 3 * 2)
-        vidLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
-        self.view.layer.addSublayer(vidLayer)
+        // Progress Bar
+        pv = UIProgressView(frame: CGRectMake(0, 0, self.view.frame.size.width, 0))
+        pv?.progressTintColor = UIColor.yellowColor()
+        pv?.trackTintColor = UIColor.blackColor()
+        pv?.transform = CGAffineTransformMakeScale(1.0, 50.0)
+        pv?.progress = 0.0
+        self.view.addSubview(pv!)
+        
+        // Video Screen
+        vidLayer = AVCaptureVideoPreviewLayer(session: session)
+        vidLayer?.frame = CGRectMake(0, pv!.frame.size.height / 2, self.view.frame.size.width, self.view.frame.size.height / 3 * 2)
+        vidLayer?.videoGravity = AVLayerVideoGravityResizeAspectFill
+        self.view.layer.addSublayer(vidLayer!)
         
         // Start session
         session?.startRunning()
     }
+    
+    func initController()
+    {
+        self.view.backgroundColor = UIColor.whiteColor()
+        let hController = self.view.frame.size.height - (vidLayer!.frame.origin.y + vidLayer!.frame.size.height)
+        let yBtnCenter = self.view.frame.size.height - hController / 2
+        
+        // Button (Photo / Vid)
+        let hBtn = 100 as CGFloat
+        let btnSnap: UIButton = UIButton(type: .Custom)
+        btnSnap.frame = CGRectMake(0, 0, hBtn, hBtn)
+        btnSnap.backgroundColor = UIColor.blackColor()
+        btnSnap.center = CGPointMake(self.view.frame.size.width / 2, yBtnCenter)
+        btnSnap.layer.cornerRadius = hBtn / 2
+        btnSnap.addTarget(self, action:"takePicture", forControlEvents: UIControlEvents.TouchUpInside)
+        self.view.addSubview(btnSnap)
+        
+        // Add long press
+        let longPress = UILongPressGestureRecognizer(target: self, action: "takeVideo:")
+        btnSnap.addGestureRecognizer(longPress)
+        
+        // Button (Flash)
+        let btnFlash: UIButton = UIButton(type: .System)
+        btnFlash.setImage(UIImage(named: "flash"), forState: .Normal)
+        btnFlash.frame = CGRectMake(0, 0, 70, 70)
+        btnFlash.center = CGPointMake(self.view.frame.size.width / 4 - hBtn / 4, yBtnCenter)
+        btnFlash.layer.cornerRadius = 35
+        btnFlash.tintColor = UIColor.darkGrayColor()
+        btnFlash.addTarget(self, action:"flash:", forControlEvents: UIControlEvents.TouchUpInside)
+        self.view.addSubview(btnFlash)
+        
+        // Button (Switch camera)
+        let btnSwitch: UIButton = UIButton(type: .System)
+        btnSwitch.setImage(UIImage(named: "retry"), forState: .Normal)
+        btnSwitch.frame = CGRectMake(0, 0, 70, 70)
+        btnSwitch.center = CGPointMake(self.view.frame.size.width / 4 * 3 + hBtn / 4, yBtnCenter)
+        btnSwitch.layer.cornerRadius = 35
+        btnSwitch.tintColor = UIColor.darkGrayColor()
+        btnSwitch.addTarget(self, action:"switchCamera:", forControlEvents: UIControlEvents.TouchUpInside)
+        self.view.addSubview(btnSwitch)
+    }
+    
     
     // MARK: - Action
     internal func takePicture()
@@ -143,7 +155,7 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         })
     }
     
-    func longPressed(sender: UILongPressGestureRecognizer)
+    func takeVideo(sender: UILongPressGestureRecognizer)
     {
         switch sender.state
         {
@@ -158,8 +170,13 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
             let url = NSURL(fileURLWithPath: path)
             vidOutput?.startRecordingToOutputFileURL(url, recordingDelegate: self)
             
+            // Timer
+            tm = NSTimer.scheduledTimerWithTimeInterval(0.01, target: self, selector: Selector("recordVideo:"), userInfo: nil, repeats: true)
+            
         case UIGestureRecognizerState.Ended:
             print("long tap end")
+            tm?.invalidate()
+            pv?.progress = 0.0
             vidOutput?.stopRecording()
             
         default:
@@ -167,7 +184,7 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         }
     }
     
-    internal func flash()
+    internal func flash(btn: UIButton)
     {
         let device = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
         if  device.hasTorch
@@ -185,7 +202,7 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         }
     }
     
-    internal func switchCamera()
+    internal func switchCamera(btn: UIButton)
     {
         if (session != nil)
         {
@@ -205,7 +222,7 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         }
     }
     
-    // MARK:- AVCaptureFileOutputRecordingDelegate
+    // MARK: AVCaptureFileOutputRecordingDelegate
     func captureOutput(captureOutput: AVCaptureFileOutput!, didStartRecordingToOutputFileAtURL fileURL: NSURL!, fromConnections connections: [AnyObject]!)
     {
         print("didStartRecordingToOutputFileAtURL")
@@ -217,6 +234,23 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         
         // Save Video to photo album
         ALAssetsLibrary().writeVideoAtPathToSavedPhotosAlbum(outputFileURL, completionBlock: nil)
+    }
+    
+    // MARK:- Support
+    internal func recordVideo(tm: NSTimer)
+    {
+        if pv?.progress < 1.0
+        {
+            let interval = 0.01 as Float
+            let maxLength = 10.0 as Float
+            let currentLength = pv!.progress * maxLength + interval
+            let currentProgress = currentLength / maxLength
+            pv?.progress = currentProgress
+        }
+        else
+        {
+            vidOutput?.stopRecording()
+        }
     }
     
     override func didReceiveMemoryWarning()
