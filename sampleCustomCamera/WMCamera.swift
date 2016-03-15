@@ -12,9 +12,9 @@ import AssetsLibrary
 
 class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
 {
+    private var imgOutput : AVCaptureStillImageOutput?
     private var vidOutput : AVCaptureMovieFileOutput?
     private var session : AVCaptureSession?
-    private var isRecording : Bool?
     
     override func viewDidLoad()
     {
@@ -35,8 +35,12 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         btnSnap.backgroundColor = UIColor.blackColor()
         btnSnap.center = CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 3 * 2 + self.view.frame.size.height / 6)
         btnSnap.layer.cornerRadius = hBtn / 2
-        btnSnap.addTarget(self, action:"snap", forControlEvents: UIControlEvents.TouchUpInside)
+        btnSnap.addTarget(self, action:"takePicture", forControlEvents: UIControlEvents.TouchUpInside)
         self.view.addSubview(btnSnap)
+        
+        // Add long press
+        let longPress = UILongPressGestureRecognizer(target: self, action: "longPressed:")
+        btnSnap.addGestureRecognizer(longPress)
         
         // Button (Flash)
         let btnFlash: UIButton = UIButton(type: .Custom)
@@ -63,7 +67,6 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
     
     func initCamera(position: AVCaptureDevicePosition)
     {
-        isRecording = false
         var myDevice: AVCaptureDevice?
         let devices = AVCaptureDevice.devices()
         let captureDevice = AVCaptureDevice.devicesWithMediaType(AVMediaTypeAudio)
@@ -99,13 +102,13 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         
         // Create session
         vidOutput = AVCaptureMovieFileOutput()
-        let myImageOutput = AVCaptureStillImageOutput()
+        imgOutput = AVCaptureStillImageOutput()
         session = AVCaptureSession()
         session?.beginConfiguration()
         session?.sessionPreset = AVCaptureSessionPresetMedium
         session?.addInput(videoInput)
         session?.addInput(audioInput)
-        session?.addOutput(myImageOutput)
+        session?.addOutput(imgOutput)
         session?.addOutput(vidOutput)
         session?.commitConfiguration()
         
@@ -120,27 +123,47 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
     }
     
     // MARK: - Action
-    internal func snap()
+    internal func takePicture()
     {
-        // Snap (Movie)
-        if isRecording == false
+        // Connect to Video output
+        let vidConnection = imgOutput?.connectionWithMediaType(AVMediaTypeVideo)
+        
+        // Get Image
+        imgOutput?.captureStillImageAsynchronouslyFromConnection(vidConnection, completionHandler: { (imageDataBuffer, error) -> Void in
+            
+            // Convert data to Jpeg
+            let imgData = AVCaptureStillImageOutput.jpegStillImageNSDataRepresentation(imageDataBuffer)
+            
+            // Create UIImage from Jpeg
+            if let img = UIImage(data: imgData)
+            {
+                // Save to Photo Album
+                UIImageWriteToSavedPhotosAlbum(img, self, nil, nil)
+            }
+        })
+    }
+    
+    func longPressed(sender: UILongPressGestureRecognizer)
+    {
+        switch sender.state
         {
-            // フォルダ.
+        case UIGestureRecognizerState.Began:
+            print("long tap begin")
             let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)
-            guard let docDirectory = paths[0] as String? else {
+            guard let docDirectory = paths[0] as String? else
+            {
                 return
             }
+            let path = "\(docDirectory)/temp.mp4"
+            let url = NSURL(fileURLWithPath: path)
+            vidOutput?.startRecordingToOutputFileURL(url, recordingDelegate: self)
             
-            let filePath : String? = "\(docDirectory)/temp.mp4"
-            let fileURL : NSURL = NSURL(fileURLWithPath: filePath!)
-            vidOutput?.startRecordingToOutputFileURL(fileURL, recordingDelegate: self)
-            isRecording = true
-        }
-        // Stop (Movie)
-        else
-        {
+        case UIGestureRecognizerState.Ended:
+            print("long tap end")
             vidOutput?.stopRecording()
-            isRecording = false
+            
+        default:
+            break
         }
     }
     
