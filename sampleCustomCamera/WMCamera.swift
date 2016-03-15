@@ -53,7 +53,7 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         btnFlash.addTarget(self, action:"flash", forControlEvents: UIControlEvents.TouchUpInside)
         self.view.addSubview(btnFlash)
         
-        // Button (Retry)
+        // Button (Switch camera)
         let btnSwitch: UIButton = UIButton(type: .Custom)
         btnSwitch.setImage(UIImage(named: "retry"), forState: .Normal)
         btnSwitch.frame = CGRectMake(0, 0, 70, 70)
@@ -214,6 +214,9 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
     func captureOutput(captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAtURL outputFileURL: NSURL!, fromConnections connections: [AnyObject]!, error: NSError!)
     {
         print("didFinishRecordingToOutputFileAtURL")
+        
+        // Save Video to photo album
+        ALAssetsLibrary().writeVideoAtPathToSavedPhotosAlbum(outputFileURL, completionBlock: nil)
     }
     
     override func didReceiveMemoryWarning()
