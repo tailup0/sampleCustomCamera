@@ -12,69 +12,18 @@ import AssetsLibrary
 
 class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
 {
-    // ビデオのアウトプット.
-    private var myVideoOutput : AVCaptureMovieFileOutput!
-    private var isRecirding : Bool?
+    private var vidOutput : AVCaptureMovieFileOutput?
+    private var session : AVCaptureSession?
+    private var isRecording : Bool?
     
     override func viewDidLoad()
     {
         super.viewDidLoad()
-        
-        isRecirding = false
-        var myDevice: AVCaptureDevice?
-        let devices = AVCaptureDevice.devices()
-        let audioCaptureDevice = AVCaptureDevice.devicesWithMediaType(AVMediaTypeAudio)
-        
-        // マイクをセッションのInputに追加.
-        var audioInput = AVCaptureDeviceInput()
-        do {
-            audioInput = try AVCaptureDeviceInput(device: audioCaptureDevice[0] as! AVCaptureDevice)
-        }
-        catch let error as NSError
-        {
-            print(error)
-            return
-        }
-        
-        // バックライトをmyDeviceに格納.
-        for device in devices
-        {
-            if(device.position == AVCaptureDevicePosition.Back)
-            {
-                myDevice = device as? AVCaptureDevice
-            }
-        }
-        
-        // バックカメラを取得.
-        var videoInput = AVCaptureDeviceInput()
-        do {
-            videoInput = try AVCaptureDeviceInput(device: myDevice)
-        }
-        catch let error as NSError
-        {
-            print(error)
-        }
-        
-        // 出力先を生成.
-        myVideoOutput = AVCaptureMovieFileOutput()
-        let myImageOutput = AVCaptureStillImageOutput()
-        let session = AVCaptureSession()
-        session.addInput(videoInput)
-        session.addInput(audioInput)
-        session.addOutput(myImageOutput)
-        session.addOutput(myVideoOutput)
-        
-        // 画像を表示するレイヤーを生成.
-        let myVideoLayer = AVCaptureVideoPreviewLayer(session: session)
-        myVideoLayer.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height / 3 * 2)
-        myVideoLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
-        self.view.layer.addSublayer(myVideoLayer)
-        
-        // セッション開始.
-        session.startRunning()
         self.initView()
+        self.initCamera(AVCaptureDevicePosition.Back)
     }
     
+    // MARK: - UI
     func initView()
     {
         self.view.backgroundColor = UIColor.whiteColor()
@@ -86,7 +35,7 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         btnSnap.backgroundColor = UIColor.blackColor()
         btnSnap.center = CGPointMake(self.view.frame.size.width / 2, self.view.frame.size.height / 3 * 2 + self.view.frame.size.height / 6)
         btnSnap.layer.cornerRadius = hBtn / 2
-        btnSnap.addTarget(self, action:"snap:", forControlEvents: UIControlEvents.TouchUpInside)
+        btnSnap.addTarget(self, action:"snap", forControlEvents: UIControlEvents.TouchUpInside)
         self.view.addSubview(btnSnap)
         
         // Button (Flash)
@@ -101,62 +50,147 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         self.view.addSubview(btnFlash)
         
         // Button (Retry)
-        let btnRetry: UIButton = UIButton(type: .Custom)
-        btnRetry.setImage(UIImage(named: "retry"), forState: .Normal)
-        btnRetry.frame = CGRectMake(0, 0, 70, 70)
-        btnRetry.center = CGPointMake(self.view.frame.size.width / 4 * 3 + hBtn / 4, self.view.frame.size.height / 3 * 2 + self.view.frame.size.height / 6)
-        btnRetry.layer.cornerRadius = 35
-        btnRetry.layer.borderWidth = 3
-        btnRetry.layer.borderColor = UIColor.lightGrayColor().colorWithAlphaComponent(0.2).CGColor
-        btnRetry.addTarget(self, action:"retry", forControlEvents: UIControlEvents.TouchUpInside)
-        self.view.addSubview(btnRetry)
+        let btnSwitch: UIButton = UIButton(type: .Custom)
+        btnSwitch.setImage(UIImage(named: "retry"), forState: .Normal)
+        btnSwitch.frame = CGRectMake(0, 0, 70, 70)
+        btnSwitch.center = CGPointMake(self.view.frame.size.width / 4 * 3 + hBtn / 4, self.view.frame.size.height / 3 * 2 + self.view.frame.size.height / 6)
+        btnSwitch.layer.cornerRadius = 35
+        btnSwitch.layer.borderWidth = 3
+        btnSwitch.layer.borderColor = UIColor.lightGrayColor().colorWithAlphaComponent(0.2).CGColor
+        btnSwitch.addTarget(self, action:"switchCamera", forControlEvents: UIControlEvents.TouchUpInside)
+        self.view.addSubview(btnSwitch)
     }
     
+    func initCamera(position: AVCaptureDevicePosition)
+    {
+        isRecording = false
+        var myDevice: AVCaptureDevice?
+        let devices = AVCaptureDevice.devices()
+        let captureDevice = AVCaptureDevice.devicesWithMediaType(AVMediaTypeAudio)
+        
+        // Back camera
+        var videoInput = AVCaptureDeviceInput()
+        for device in devices
+        {
+            if(device.position == position)
+            {
+                myDevice = device as? AVCaptureDevice
+                do {
+                    videoInput = try AVCaptureDeviceInput(device: myDevice)
+                }
+                catch let error as NSError
+                {
+                    print(error)
+                    return
+                }
+            }
+        }
+        
+        // Audio
+        var audioInput = AVCaptureDeviceInput()
+        do {
+            audioInput = try AVCaptureDeviceInput(device: captureDevice[0] as! AVCaptureDevice)
+        }
+        catch let error as NSError
+        {
+            print(error)
+            return
+        }
+        
+        // Create session
+        vidOutput = AVCaptureMovieFileOutput()
+        let myImageOutput = AVCaptureStillImageOutput()
+        session = AVCaptureSession()
+        session?.beginConfiguration()
+        session?.sessionPreset = AVCaptureSessionPresetMedium
+        session?.addInput(videoInput)
+        session?.addInput(audioInput)
+        session?.addOutput(myImageOutput)
+        session?.addOutput(vidOutput)
+        session?.commitConfiguration()
+        
+        // Add video layer
+        let vidLayer = AVCaptureVideoPreviewLayer(session: session)
+        vidLayer.frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height / 3 * 2)
+        vidLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
+        self.view.layer.addSublayer(vidLayer)
+        
+        // Start session
+        session?.startRunning()
+    }
     
     // MARK: - Action
-    internal func snap(btn: UIButton)
+    internal func snap()
     {
         // Snap (Movie)
-        if isRecirding == false
+        if isRecording == false
         {
             // フォルダ.
             let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)
-            guard let documentsDirectory = paths[0] as String? else {
+            guard let docDirectory = paths[0] as String? else {
                 return
             }
             
-            let filePath : String? = "\(documentsDirectory)/test.mp4"
+            let filePath : String? = "\(docDirectory)/temp.mp4"
             let fileURL : NSURL = NSURL(fileURLWithPath: filePath!)
-            myVideoOutput.startRecordingToOutputFileURL(fileURL, recordingDelegate: self)
-            isRecirding = true
+            vidOutput?.startRecordingToOutputFileURL(fileURL, recordingDelegate: self)
+            isRecording = true
         }
         // Stop (Movie)
         else
         {
-            myVideoOutput.stopRecording()
-            isRecirding = false
+            vidOutput?.stopRecording()
+            isRecording = false
         }
     }
     
     internal func flash()
     {
-        
+        let device = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
+        if  device.hasTorch
+        {
+            do {
+                try device.lockForConfiguration()
+            }
+            catch let error as NSError
+            {
+                print("\(error)")
+                return
+            }
+            device.torchMode = AVCaptureTorchMode.Off == device.torchMode ? AVCaptureTorchMode.On : AVCaptureTorchMode.Off
+            device.unlockForConfiguration()
+        }
     }
     
-    internal func retry()
+    internal func switchCamera()
     {
-        
+        if (session != nil)
+        {
+            guard let currentCamera = session?.inputs[0] as? AVCaptureDeviceInput else
+            {
+                return
+            }
+            
+            if currentCamera.device.position == AVCaptureDevicePosition.Front
+            {
+                self.initCamera(AVCaptureDevicePosition.Back)
+            }
+            else
+            {
+                self.initCamera(AVCaptureDevicePosition.Front)
+            }
+        }
     }
     
     // MARK:- AVCaptureFileOutputRecordingDelegate
-    func captureOutput(captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAtURL outputFileURL: NSURL!, fromConnections connections: [AnyObject]!, error: NSError!)
-    {
-        print("didFinishRecordingToOutputFileAtURL")
-    }
-    
     func captureOutput(captureOutput: AVCaptureFileOutput!, didStartRecordingToOutputFileAtURL fileURL: NSURL!, fromConnections connections: [AnyObject]!)
     {
         print("didStartRecordingToOutputFileAtURL")
+    }
+    
+    func captureOutput(captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAtURL outputFileURL: NSURL!, fromConnections connections: [AnyObject]!, error: NSError!)
+    {
+        print("didFinishRecordingToOutputFileAtURL")
     }
     
     override func didReceiveMemoryWarning()
