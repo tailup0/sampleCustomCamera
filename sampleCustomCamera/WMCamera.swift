@@ -9,6 +9,7 @@
 import UIKit
 import AVFoundation
 import AssetsLibrary
+import Alamofire
 
 class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
 {
@@ -184,6 +185,31 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
         }
     }
     
+    private func sendVideo(filepath: NSURL?) {
+        guard let cFileUrl = filepath else {
+            return
+        }
+        Alamofire.upload(
+            .POST,
+            "http://vagranthost.xyz:8000/post",
+            multipartFormData: { multipartFormData in
+                multipartFormData.appendBodyPart(fileURL: cFileUrl, name: "file")
+            },
+            encodingCompletion: { encodingResult in
+                switch encodingResult {
+                case .Success(let upload, _, _):
+                    upload.responseJSON { res in
+                        NSLog("\(res.response?.statusCode)")
+//                        debugPrint(res)
+                    }
+                case .Failure(let encodingError):
+                    print(encodingError)
+                }
+            }
+        )
+ 
+    }
+    
     internal func flash(btn: UIButton)
     {
         let device = AVCaptureDevice.defaultDeviceWithMediaType(AVMediaTypeVideo)
@@ -231,6 +257,8 @@ class WMCamera: UIViewController, AVCaptureFileOutputRecordingDelegate
     func captureOutput(captureOutput: AVCaptureFileOutput!, didFinishRecordingToOutputFileAtURL outputFileURL: NSURL!, fromConnections connections: [AnyObject]!, error: NSError!)
     {
         print("didFinishRecordingToOutputFileAtURL")
+        
+        sendVideo(outputFileURL)
         
         // Save Video to photo album
         ALAssetsLibrary().writeVideoAtPathToSavedPhotosAlbum(outputFileURL, completionBlock: nil)
