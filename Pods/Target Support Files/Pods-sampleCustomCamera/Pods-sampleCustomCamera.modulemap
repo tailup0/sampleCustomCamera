@@ -1,0 +1,6 @@
+framework module Pods_sampleCustomCamera {
+  umbrella header "Pods-sampleCustomCamera-umbrella.h"
+
+  export *
+  module * { export * }
+}
